@@ -31,7 +31,6 @@ for i, cnt in enumerate(contours):
             if hierarchy[0][i][3] == -1:
                 cards.append(approx)
 
-print(cards)
 print("there are " + str(len(cards)) + " cards in play right now")
 
 
@@ -45,8 +44,22 @@ for card in cards:
     ROIs.append(roi)
 
 for i, roi in enumerate(ROIs):
-    cv.imshow("Card " + str(i) + ":", roi)
+    roi_gray = cv.cvtColor(roi, cv.COLOR_BGR2GRAY)
+    blur = cv.GaussianBlur(roi_gray, (15, 15), 0)
+    thresh = cv.adaptiveThreshold(blur, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 11, 2)
+    canny = cv.Canny(thresh, 100, 200)
+    contours, hierarchy = cv.findContours(canny, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    count = 0
+    minArea = 1000
+    for x, contour in enumerate(contours):
+        if cv.contourArea(contour) > cv.arcLength(contour, True) and hierarchy[0][x][3] == -1 and cv.contourArea(contour) > minArea:
+            print(cv.contourArea(contour))
+            count += 1
+    cv.imshow("Card " + str(i) + ": " + str(count) + " shapes", roi)
 
+
+
+
+#determine what each card is
 cv.waitKey(0)
 cv.destroyAllWindows()
-
