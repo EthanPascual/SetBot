@@ -1,6 +1,18 @@
 import cv2 as cv
 import numpy as np
 
+lowerGreen = np.array([35, 100, 100])
+upperGreen = np.array([85, 255, 255])
+
+lowerPurple = np.array([130, 80, 70])
+upperPurple = np.array([165, 255, 255])
+
+lowerRed1 = np.array([0, 100, 100])
+upperRed1 = np.array([10, 255, 255])
+lowerRed2 = np.array([170, 100, 100])
+upperRed2 = np.array([180, 255, 255])
+
+
 
 def createContour(image):
     img = cv.imread(image, cv.IMREAD_GRAYSCALE)
@@ -34,8 +46,29 @@ def findShape(contour):
 
     return shape
 
+def findColor(card):
+    hsv = cv.cvtColor(card, cv.COLOR_BGR2HSV)
+    greenMask = cv.inRange(hsv, lowerGreen, upperGreen)
+    purpleMask = cv.inRange(hsv, lowerPurple, upperPurple)
+
+    redMask1 = cv.inRange(hsv, lowerRed1, upperRed1)
+    redMask2 = cv.inRange(hsv, lowerRed2, upperRed2)
+    redMask = cv.bitwise_or(redMask1, redMask2)
+
+    redPixels = np.count_nonzero(redMask)
+    greenPixels = np.count_nonzero(greenMask)
+    purplePixels = np.count_nonzero(purpleMask)
+
+    if redPixels > greenPixels and redPixels > purplePixels:
+        return "Red"
+    elif purplePixels > greenPixels and purplePixels > redPixels:
+        return "Purple"
+    else:
+        return "Green"
+
+    
 #takes an image of board and isolates all the cards
-img = cv.imread("setTest2.jpg", cv.IMREAD_GRAYSCALE)
+img = cv.imread("setTest1.jpg", cv.IMREAD_GRAYSCALE)
 if img is None:
     print("cannot read image")
     exit()
@@ -70,7 +103,7 @@ print("there are " + str(len(cards)) + " cards in play right now")
 #create the regions of interest for each card
 #create a bounding rectangle for each card, and use that to create regions of interest for cards
 ROIs = []
-img = cv.imread("setTest2.jpg")
+img = cv.imread("setTest1.jpg")
 for card in cards:
     x, y, w, h = cv.boundingRect(card)
     roi = img[y:y+h, x:x+w]
@@ -94,8 +127,9 @@ for i, roi in enumerate(ROIs):
             if len(shapeCheck) == 0:
                 shapeCheck = contour
     shape = findShape(shapeCheck)
+    color = findColor(roi)
 
-    cv.imshow("Card " + str(i) + ": " + str(count) + " " + shape + " shapes", roi)
+    cv.imshow("Card " + str(i) + ": " + str(count) + " " + shape + " " + color + " shapes", roi)
 
 
 
