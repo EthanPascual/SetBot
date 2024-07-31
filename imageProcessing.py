@@ -65,8 +65,19 @@ def findColor(card):
         return "Purple"
     else:
         return "Green"
-
     
+def findShade(roi):
+    gray = cv.cvtColor(roi, cv.COLOR_BGR2GRAY)
+    canny = cv.Canny(gray, 100, 200)
+    contours, hierarchy = cv.findContours(canny, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    print(len(contours))
+    if len(contours) <= 2:
+        return "Solid"
+    elif len(contours) <= 8:
+        return "Empty"
+    else:
+        return "Striped"
+
 #takes an image of board and isolates all the cards
 img = cv.imread("setTest1.jpg", cv.IMREAD_GRAYSCALE)
 if img is None:
@@ -121,7 +132,7 @@ for i, roi in enumerate(ROIs):
     shapeCheck = []
     for x, contour in enumerate(contours): #counting how many shapes
 
-        #checks to see if contour is closed, it has no children, and the area greater than a certain value (sometimes noise shows up)
+        #checks to see if contour is closed, it has no children, and the area greater than a certain value (cuz sometimes noise shows up)
         if cv.contourArea(contour) > cv.arcLength(contour, True) and hierarchy[0][x][3] == -1 and cv.contourArea(contour) > minArea:
             count += 1
             if len(shapeCheck) == 0:
@@ -129,7 +140,11 @@ for i, roi in enumerate(ROIs):
     shape = findShape(shapeCheck)
     color = findColor(roi)
 
-    cv.imshow("Card " + str(i) + ": " + str(count) + " " + shape + " " + color + " shapes", roi)
+    x, y, w, h = cv.boundingRect(shapeCheck)
+    shapeROI = roi[y:y+h, x:x+w]
+    shade = findShade(shapeROI)
+    
+    cv.imshow("Card " + str(i) + ": " + str(count) + " " + shape + " " + color + " " + shade +  " shapes", roi)
 
 
 
